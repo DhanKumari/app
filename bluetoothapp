@@ -1,0 +1,73 @@
+import 'dart:async';
+import 'package:flutter/material.dart';
+import 'package:flutter_blue/flutter_blue.dart';
+
+final FlutterBlue flutterBlue = FlutterBlue.instance;
+
+class MyApp extends StatefulWidget {
+  @override
+  _MyAppState createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  List<BluetoothDevice> devices = [];
+
+  @override
+  void initState() {
+    super.initState();
+    startScan();
+  }
+
+  void startScan() {
+    // Start scanning
+    flutterBlue.startScan(timeout: Duration(seconds: 30));
+
+    // Listen to scan results
+    var subscription = flutterBlue.scanResults.listen((results) {
+      // Do something with scan results
+      for (ScanResult result in results) {
+        if (result.device.name.contains("HM-10")) {
+          setState(() {
+            devices.add(result.device);
+          });
+        }
+      }
+    });
+
+    // Stop scanning
+    Future.delayed(Duration(seconds: 30), () {
+      flutterBlue.stopScan();
+    });
+
+    // Cancel subscription
+    subscription.cancel();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: Scaffold(
+        appBar: AppBar(
+          title: Text('Bluetooth list'),
+        ),
+        body: ListView.builder(
+          itemCount: devices.length,
+          itemBuilder: (context, index) {
+            return ListTile(
+              title: Text(devices[index].name),
+              subtitle: Text(devices[index].id.toString()),
+            );
+          },
+        ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: startScan,
+          child: Icon(Icons.refresh),
+        ),
+      ),
+    );
+  }
+}
+
+
+
+void main() => runApp(MyApp());
